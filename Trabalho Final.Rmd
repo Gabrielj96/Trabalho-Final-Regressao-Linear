@@ -1,0 +1,120 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(corrplot)
+```
+
+# **1. Capa**
+
+![](lightweight_mmm.png)
+
+## **Análise de Regressão Linear Múltipla: relações entre publicidade e receita**
+
+Gabriel Augusto
+
+Bruce Percílio
+
+Fernando
+
+# **2. Resumo**
+
+# **3. Introdução**
+
+A estatística está cada vez mais presente no mercado de publicidade, cada ano surgem novas ténicas, métodos e experimentos para impulsionar os resultados dos négocios.
+
+Sendo assim, o presente trabalho tem como objetivo entender a relação entre variáveis de publicidade, online e offline, na receita. Para isso foi utilizado a análise descritiva e a técnica de análise de regressão múltipla.
+
+# **4. Materiais e Métodos**
+
+A base de dados foi extraída do pacote Robyn, um pacote no R voltado para análises estatísticas para o mercado de publicidade criado pelo Facebook.
+
+O arquivo conta com uma amostra de 208 observações semanais, uma variável data, uma variável dependente e 10 variáveis independentes.
+
+## **4.1 Dicionário de Dados**
+
+DATE = Data (por semana)
+
+revenue = Receita
+
+tv_S = Valor gasto com publicidade na TV
+
+ooh_S = Valor gasto com publicidade Out of Home (Outdoors, pôsteres, painéis digitais, mídia aérea)
+
+print_S = Valor gasto com publicidade impressa (Panfletos)
+
+facebook_I = Impressões no Facebook
+
+search_clicks_P = Cliques em anúncios nos mecanismos de busca (Google, Bing)
+
+search_S = Valor gasto com publiciddade nos mecanismos de busca (Google, Bing)
+
+competitor_sales_B = Vendas do concorrente
+
+facebook_S = Valor gasto com publicidade no Facebook
+
+events = Eventos ocorridos durante determinada semana
+
+newsletter = Impressões no canal de notícias
+
+```{r echo=TRUE}
+df = read.csv("Marketing_regressao.csv")
+head(df)
+```
+
+# **5. Resultados e Discussão**
+
+## **5.1 Análise Descritiva**
+
+### Sumário
+
+Analisando o sumário já temos noção do tipo de dados que precisaremos trabalhar, segue abaixo um resumo:
+
+Variáveis qualitativas: 2
+
+Variáveis quantitativas: 10
+
+Dessas 12 variáveis uma é a variável dependente.
+
+```{r echo=TRUE}
+as.data.frame(summary(df))
+```
+
+### Boxplot
+
+```{r echo=TRUE}
+par(mfrow=c(1,3))
+boxplot(df$revenue, ylab="Revenue")
+boxplot(df$tv_S, ylab="tv_S")
+boxplot(df$ooh_S, ylab="ooh_S")
+boxplot(df$facebook_I, ylab="facebook_I")
+boxplot(df$search_clicks_P, ylab="search_clicks_P")
+boxplot(df$search_S, ylab="search_S")
+boxplot(df$competitor_sales_B, ylab="competitor_sales_B")
+boxplot(df$facebook_S, ylab="facebook_S")
+boxplot(df$newsletter, ylab="newsletter")
+boxplot(df$print_S, ylab="print_S")
+```
+
+### Correlação
+
+```{r echo=TRUE}
+
+corrplot::corrplot(cor(df[, sapply(df, is.numeric)], method = "pearson"), method = 'number', type = 'lower', number.cex = 0.5, col=colorRampPalette(c("red","gray","blue"))(200))
+```
+
+```{r echo=TRUE}
+
+psych::pairs.panels(df[, sapply(df, is.numeric)], 
+             smooth = FALSE,
+             method = "pearson",
+             density = TRUE,
+             ellipses = FALSE,
+             cex.cor = 1.5
+) 
+```
+
+# **6. Conclusão**
