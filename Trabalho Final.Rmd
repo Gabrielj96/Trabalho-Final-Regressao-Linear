@@ -6,6 +6,7 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(corrplot)
+options(scipen = 999)
 ```
 
 # **1. Capa**
@@ -83,7 +84,9 @@ Dessas 12 variáveis uma é a variável dependente.
 as.data.frame(summary(df))
 ```
 
-### Boxplot
+### Normalidade
+
+A análise gráfico e shapiro wilk teste nos mostra um padrão não normal em todas as variáveis, algumas mais e outras menos.
 
 ```{r echo=TRUE}
 par(mfrow=c(1,3))
@@ -96,10 +99,32 @@ boxplot(df$search_S, ylab="search_S")
 boxplot(df$competitor_sales_B, ylab="competitor_sales_B")
 boxplot(df$facebook_S, ylab="facebook_S")
 boxplot(df$newsletter, ylab="newsletter")
-boxplot(df$print_S, ylab="print_S")
+```
+
+```{r echo=TRUE}
+par(mfrow=c(1,3))
+qqnorm(df$revenue, ylab="Revenue"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$tv_S, ylab="tv_S"); qqline(df$tv_S, ylab="tv_S")
+qqnorm(df$ooh_S, ylab="ooh_S"); qqline(df$ooh_S, ylab="ooh_S")
+qqnorm(df$facebook_I, ylab="facebook_I"); qqline(df$facebook_I, ylab="facebook_I")
+qqnorm(df$search_clicks_P, ylab="search_clicks_P"); qqline(df$search_clicks_P, ylab="search_clicks_P")
+qqnorm(df$search_S, ylab="search_S"); qqline(df$search_S, ylab="search_S")
+qqnorm(df$competitor_sales_B, ylab="competitor_sales_B"); qqline(df$competitor_sales_B, ylab="competitor_sales_B")
+qqnorm(df$facebook_S, ylab="facebook_S"); qqline(df$facebook_S, ylab="facebook_S")
+qqnorm(df$newsletter, ylab="newsletter"); qqline(df$newsletter, ylab="newsletter")
+```
+
+```{r echo=TRUE}
+df_shap = data.frame(Var = c("0"), P_value = c(0))
+for (variable in colnames(subset(df, select = -c(DATE, events)))) {
+  df_shap[nrow(df_shap) + 1,] = c(variable, shapiro.test(df[[variable]])[2])
+}
+df_shap
 ```
 
 ### Correlação
+
+A análise de correlação mostra que todas variáveis tem certa correlação positiva com a variável dependentes e não aparenta ter problemas de multicolinearidade, já que a correlação entre variáveis indepedentes não é muito alta.
 
 ```{r echo=TRUE}
 
@@ -114,7 +139,24 @@ psych::pairs.panels(df[, sapply(df, is.numeric)],
              density = TRUE,
              ellipses = FALSE,
              cex.cor = 1.5
-) 
+)
+```
+
+### **Ajuste do Modelo**
+
+```{r echo=TRUE}
+modelo1 = lm(revenue ~ tv_S + ooh_S + print_S + search_S + facebook_S, data = df)
+summary(modelo1)
+```
+
+```{r echo=TRUE}
+anova(modelo1)
+```
+
+### Predição
+
+```{r echo=TRUE}
+
 ```
 
 # **6. Conclusão**
