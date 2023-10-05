@@ -145,3 +145,5 @@ psych::pairs.panels(df[, sapply(df, is.numeric)],
 ```
 
 # **6. Conclusão**
+
+Em andamento
