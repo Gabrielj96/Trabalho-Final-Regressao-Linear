@@ -6,6 +6,7 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(corrplot)
+options(scipen = 999)
 ```
 
 # **1. Capa**
@@ -83,7 +84,23 @@ Dessas 12 variáveis uma é a variável dependente.
 as.data.frame(summary(df))
 ```
 
-### Boxplot
+### Normalidade
+
+A análise gráfica e shapiro wilk teste nos mostra que todas as variáveis, algumas mais e outras menos, fogem de um padrão de normalidade.
+
+```{r echo=TRUE}
+par(mfrow=c(1,3))
+qqnorm(df$revenue, ylab="Revenue"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$tv_S, ylab="tv_S"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$ooh_S, ylab="ooh_S"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$facebook_I, ylab="facebook_I"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$search_clicks_P, ylab="search_clicks_P"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$search_S, ylab="search_S"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$competitor_sales_B, ylab="competitor_sales_B"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$facebook_S, ylab="facebook_S"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$newsletter, ylab="newsletter"); qqline(df$revenue, ylab="Revenue")
+qqnorm(df$print_S, ylab="print_S"); qqline(df$revenue, ylab="Revenue")
+```
 
 ```{r echo=TRUE}
 par(mfrow=c(1,3))
@@ -99,7 +116,17 @@ boxplot(df$newsletter, ylab="newsletter")
 boxplot(df$print_S, ylab="print_S")
 ```
 
+```{r echo=TRUE}
+df_shapiro = data.frame(Var = c("0"), P_value = c(0))
+for (variable in colnames(subset(df, select = -c(DATE, events)))) {
+  df_shapiro[nrow(df_shapiro) + 1,] = c(variable, shapiro.test(df[[variable]])[2])
+}
+df_shapiro
+```
+
 ### Correlação
+
+Observando a correlação de pearson, aparentemente, não temos nenhum problema de multicolinearidade já quer a correlação entre variáveis explicativas são baixas.
 
 ```{r echo=TRUE}
 
