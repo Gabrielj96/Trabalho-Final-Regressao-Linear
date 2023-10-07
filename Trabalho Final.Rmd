@@ -6,6 +6,7 @@ output: html_notebook
 ```{r}
 library(dplyr)
 library(corrplot)
+library(car)
 options(scipen = 999)
 ```
 
@@ -145,18 +146,41 @@ psych::pairs.panels(df[, sapply(df, is.numeric)],
 ### **Ajuste do Modelo**
 
 ```{r echo=TRUE}
-modelo1 = lm(revenue ~ tv_S + ooh_S + print_S + search_S + facebook_S, data = df)
-summary(modelo1)
+modelo = lm(revenue ~ tv_S + ooh_S + print_S + search_S + facebook_S, data = df)
+summary(modelo)
+anova(modelo)
 ```
 
+### Seleção de Modelo (Método Forward)
+
+Para a seleção do modelo utilizamos o método forward, tanto AIC como BIC.
+
+O modelo AIC e BIC foram bem parecidos com exceção da variáveis facebook_S que foi retirada no modelo BIC.
+
+Considerando que a variável facebook_S tinha um valor p maior que 0.10 faz sentido dizer que o modelo Forward BIC fez a melhor seleção de variáveis.
+
+Modelo final = lm(formula = revenue \~ competitor_sales_B + tv_S + print_S, data = df)
+
 ```{r echo=TRUE}
+modelo1 = lm(revenue ~ 1, data = df)
+summary(modelo1)
 anova(modelo1)
 ```
 
-### Predição
+```{r echo=TRUE}
+modelo_stepForward_AIC = step(modelo1, scope = ~tv_S + ooh_S + print_S + facebook_I + search_clicks_P + search_S + competitor_sales_B + facebook_S + newsletter, direction = 'forward', k = 2)
+
+n = nrow(df)
+modelo_stepForward_BIC = step(modelo1, scope = ~tv_S + ooh_S + print_S + facebook_I + search_clicks_P + search_S + competitor_sales_B + facebook_S + newsletter, direction = 'forward', k = log(n))
+```
 
 ```{r echo=TRUE}
+summary(modelo_stepForward_AIC)
+summary(modelo_stepForward_BIC)
+```
 
+```{r echo=TRUE}
+compareCoefs(modelo_stepForward_AIC, modelo_stepForward_BIC)
 ```
 
 # **6. Conclusão**
