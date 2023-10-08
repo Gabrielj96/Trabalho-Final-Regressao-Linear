@@ -89,6 +89,8 @@ as.data.frame(summary(df))
 
 A análise gráfico e shapiro wilk teste nos mostra um padrão não normal em todas as variáveis, algumas mais e outras menos.
 
+O boxplot abaixo deixa mostra muitos outliers e a mediana sempre com determinado desvio, as variáveis mais próximas da normalidade são "revenue" e "competitor_sales_B".
+
 ```{r echo=TRUE}
 par(mfrow=c(1,3))
 boxplot(df$revenue, ylab="Revenue")
@@ -101,6 +103,8 @@ boxplot(df$competitor_sales_B, ylab="competitor_sales_B")
 boxplot(df$facebook_S, ylab="facebook_S")
 boxplot(df$newsletter, ylab="newsletter")
 ```
+
+Já o QQPLOT e QQLINE apresenta desvio dos pontos da linha de tendência, indicando possível anormalidade na distribuição dos dados.
 
 ```{r echo=TRUE}
 par(mfrow=c(1,3))
@@ -115,6 +119,8 @@ qqnorm(df$facebook_S, ylab="facebook_S"); qqline(df$facebook_S, ylab="facebook_S
 qqnorm(df$newsletter, ylab="newsletter"); qqline(df$newsletter, ylab="newsletter")
 ```
 
+E para confirmar a distribuição não-normal o shapiro-wilk teste rejeita a hipótese nula em todas as variáveis.
+
 ```{r echo=TRUE}
 df_shap = data.frame(Var = c("0"), P_value = c(0))
 for (variable in colnames(subset(df, select = -c(DATE, events)))) {
@@ -125,25 +131,18 @@ df_shap
 
 ### Correlação
 
-A análise de correlação mostra que todas variáveis tem certa correlação positiva com a variável dependentes e não aparenta ter problemas de multicolinearidade, já que a correlação entre variáveis indepedentes não é muito alta.
+A análise de correlação mostra que todas variáveis tem certa correlação positiva com a variável dependente e não aparenta problemas de multicolinearidade, já que a correlação entre variáveis indepedentes não é muito alta.
 
 ```{r echo=TRUE}
 
 corrplot::corrplot(cor(df[, sapply(df, is.numeric)], method = "pearson"), method = 'number', type = 'lower', number.cex = 0.5, col=colorRampPalette(c("red","gray","blue"))(200))
 ```
 
-```{r echo=TRUE}
-
-psych::pairs.panels(df[, sapply(df, is.numeric)], 
-             smooth = FALSE,
-             method = "pearson",
-             density = TRUE,
-             ellipses = FALSE,
-             cex.cor = 1.5
-)
-```
-
 ### **Ajuste do Modelo**
+
+Inicialmente ajustamos um modelo apenas com as variáveis de valor gasto com publicidade para cada canal apenas para ter uma noção do que podemos encontrar.
+
+O modelo retornou significância para todas variáveis, porém pouco explica a variação da variável dependente com R² de 0.43.
 
 ```{r echo=TRUE}
 modelo = lm(revenue ~ tv_S + ooh_S + print_S + search_S + facebook_S, data = df)
@@ -155,17 +154,16 @@ anova(modelo)
 
 Para a seleção do modelo utilizamos o método forward, tanto AIC como BIC.
 
-O modelo AIC e BIC foram bem parecidos com exceção da variáveis facebook_S que foi retirada no modelo BIC.
+```{r echo=TRUE}
 
-Considerando que a variável facebook_S tinha um valor p maior que 0.10 faz sentido dizer que o modelo Forward BIC fez a melhor seleção de variáveis.
+modelo1 = lm(revenue ~ 1, data = df)
+```
+
+O modelo AIC e BIC foram bem parecidos com exceção da variável facebook_S que foi retirada pelo modelo BIC.
+
+Considerando que a variável facebook_S tinha um valor p maior que 0.10 no modelo AIC faz sentido dizer que o modelo Forward BIC fez a melhor seleção de variáveis.
 
 Modelo final = lm(formula = revenue \~ competitor_sales_B + tv_S + print_S, data = df)
-
-```{r echo=TRUE}
-modelo1 = lm(revenue ~ 1, data = df)
-summary(modelo1)
-anova(modelo1)
-```
 
 ```{r echo=TRUE}
 modelo_stepForward_AIC = step(modelo1, scope = ~tv_S + ooh_S + print_S + facebook_I + search_clicks_P + search_S + competitor_sales_B + facebook_S + newsletter, direction = 'forward', k = 2)
@@ -181,6 +179,23 @@ summary(modelo_stepForward_BIC)
 
 ```{r echo=TRUE}
 compareCoefs(modelo_stepForward_AIC, modelo_stepForward_BIC)
+```
+
+### **Análise de Resíduos**
+
+```{r echo=TRUE}
+residuos1 = modelo_stepForward_BIC$residuals
+summary(residuos1)
+```
+
+```{r echo=TRUE}
+preditos1 = predict(modelo_stepForward_BIC)
+preditos1 = modelo_stepForward_BIC$fitted.values
+```
+
+```{r echo=TRUE}
+qqnorm(residuos1) ; qqline(residuos1)
+shapiro.test(residuos1)
 ```
 
 # **6. Conclusão**
