@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-```{r}
+```{r include=FALSE}
 library(dplyr)
 library(corrplot)
 library(car)
@@ -16,17 +16,21 @@ options(scipen = 999)
 
 ## **Análise de Regressão Linear Múltipla: relações entre publicidade e receita**
 
-Gabriel Augusto
-
-Bruce Percílio
-
-Fernando
+Acadêmicos: Gabriel Augusto, Bruce Percílio e Fernando Ivan Meyer
 
 # **2. Resumo**
+
+Neste estudo, o objetivo foi entender os fatores que impactam a receita de uma empresa, considerando variáveis como gastos com publicidade em diferentes canais (TV, publicidade impressa, concorrência) e a ocorrência de eventos. Inicialmente, realizou-se uma análise de normalidade e correlação entre as variáveis, que revelou uma correlação positiva geral, sem problemas de multicolinearidade.
+
+Para selecionar o modelo de regressão, utilizou-se o método forward, considerando tanto o critério AIC quanto o BIC. Ambos os critérios resultaram em modelos semelhantes, com exceção da variável de gastos com publicidade no Facebook (facebook_S), que foi excluída pelo critério BIC devido ao seu valor p superior a 0.10. O modelo final de regressão incluiu as variáveis de vendas do concorrente (competitor_sales_B), gastos com publicidade na TV (tv_S) e gastos com publicidade impressa (print_S).
+
+Isso sugere que, para prever a receita da empresa, as estratégias de publicidade na TV e na mídia impressa, bem como o desempenho do concorrente, desempenham um papel significativo. Essa análise fornece insights valiosos para a tomada de decisões em marketing e estratégia de negócios, destacando as areas-chave nas quais a empresa deve focar para impulsionar sua receita.
 
 # **3. Introdução**
 
 A estatística está cada vez mais presente no mercado de publicidade, cada ano surgem novas ténicas, métodos e experimentos para impulsionar os resultados dos négocios.
+
+Com o desuso cada vez mais frequente dos modelo de atribuição de marketing a análise de regressão vem substituindo os métodos tradicionais de entender a contribuição de cada canal de publicidade nos resultados finais
 
 Sendo assim, o presente trabalho tem como objetivo entender a relação entre variáveis de publicidade, online e offline, na receita. Para isso foi utilizado a análise descritiva e a técnica de análise de regressão múltipla.
 
@@ -36,7 +40,7 @@ A base de dados foi extraída do pacote Robyn, um pacote no R voltado para anál
 
 O arquivo conta com uma amostra de 208 observações semanais, uma variável data, uma variável dependente e 10 variáveis independentes.
 
-## **4.1 Dicionário de Dados**
+## **Dicionário de Dados**
 
 DATE = Data (por semana)
 
@@ -62,14 +66,18 @@ events = Eventos ocorridos durante determinada semana
 
 newsletter = Impressões no canal de notícias
 
-```{r echo=TRUE}
+O experimento iniciou-se observando cada variáveis e suas diferentes caracteríticas, depois fizemos uma análise de correlação para entender a relação entre variáveis independentes e dependente e problemas de multicolinearidade.
+
+Feito a análise descritiva passamos para o primeiro ajuste do modelo apenas com intercepto, selecionamos o modelo com o metódo forward (AIC e BIC) e finalizamos com uma análise de resíduos.
+
+**Gráfico 0. Dataframe**
+
+```{r echo=FALSE}
 df = read.csv("Marketing_regressao.csv")
 head(df)
 ```
 
 # **5. Resultados e Discussão**
-
-## **5.1 Análise Descritiva**
 
 ### Sumário
 
@@ -81,7 +89,9 @@ Variáveis quantitativas: 10
 
 Dessas 12 variáveis uma é a variável dependente.
 
-```{r echo=TRUE}
+**Gráfico 1. Resumo do dataframe**
+
+```{r echo=FALSE}
 as.data.frame(summary(df))
 ```
 
@@ -91,7 +101,9 @@ A análise gráfico e shapiro wilk teste nos mostra um padrão não normal em to
 
 O boxplot abaixo deixa mostra muitos outliers e a mediana sempre com determinado desvio, as variáveis mais próximas da normalidade são "revenue" e "competitor_sales_B".
 
-```{r echo=TRUE}
+**Gráfico 2. Boxplot das variáveis**
+
+```{r echo=FALSE}
 par(mfrow=c(1,3))
 boxplot(df$revenue, ylab="Revenue")
 boxplot(df$tv_S, ylab="tv_S")
@@ -106,7 +118,9 @@ boxplot(df$newsletter, ylab="newsletter")
 
 Já o QQPLOT e QQLINE apresenta desvio dos pontos da linha de tendência, indicando possível anormalidade na distribuição dos dados.
 
-```{r echo=TRUE}
+**Gráfico 3. QQPLOT e QQLINE das variáveis**
+
+```{r echo=FALSE}
 par(mfrow=c(1,3))
 qqnorm(df$revenue, ylab="Revenue"); qqline(df$revenue, ylab="Revenue")
 qqnorm(df$tv_S, ylab="tv_S"); qqline(df$tv_S, ylab="tv_S")
@@ -121,7 +135,9 @@ qqnorm(df$newsletter, ylab="newsletter"); qqline(df$newsletter, ylab="newsletter
 
 E para confirmar a distribuição não-normal o shapiro-wilk teste rejeita a hipótese nula em todas as variáveis.
 
-```{r echo=TRUE}
+**Gráfico 4. Shapiro-wilk teste das variáveis**
+
+```{r echo=FALSE}
 df_shap = data.frame(Var = c("0"), P_value = c(0))
 for (variable in colnames(subset(df, select = -c(DATE, events)))) {
   df_shap[nrow(df_shap) + 1,] = c(variable, shapiro.test(df[[variable]])[2])
@@ -133,8 +149,9 @@ df_shap
 
 A análise de correlação mostra que todas variáveis tem certa correlação positiva com a variável dependente e não aparenta problemas de multicolinearidade, já que a correlação entre variáveis indepedentes não é muito alta.
 
-```{r echo=TRUE}
+**Gráfico 5. Correlação de pearson**
 
+```{r echo=FALSE}
 corrplot::corrplot(cor(df[, sapply(df, is.numeric)], method = "pearson"), method = 'number', type = 'lower', number.cex = 0.5, col=colorRampPalette(c("red","gray","blue"))(200))
 ```
 
@@ -144,7 +161,9 @@ Inicialmente ajustamos um modelo apenas com as variáveis de valor gasto com pub
 
 O modelo retornou significância para todas variáveis, porém pouco explica a variação da variável dependente com R² de 0.43.
 
-```{r echo=TRUE}
+**Gráfico 6. Resumo e Anova do primeiro modelo**
+
+```{r echo=FALSE}
 modelo = lm(revenue ~ tv_S + ooh_S + print_S + search_S + facebook_S, data = df)
 summary(modelo)
 anova(modelo)
@@ -154,7 +173,7 @@ anova(modelo)
 
 Para a seleção do modelo utilizamos o método forward, tanto AIC como BIC.
 
-```{r echo=TRUE}
+```{r echo=FALSE}
 
 modelo1 = lm(revenue ~ 1, data = df)
 ```
@@ -165,37 +184,106 @@ Considerando que a variável facebook_S tinha um valor p maior que 0.10 no model
 
 Modelo final = lm(formula = revenue \~ competitor_sales_B + tv_S + print_S, data = df)
 
-```{r echo=TRUE}
+**Gráfico 7. Resultados metódo forward (AIC e BIC)**
+
+```{r echo=FALSE}
 modelo_stepForward_AIC = step(modelo1, scope = ~tv_S + ooh_S + print_S + facebook_I + search_clicks_P + search_S + competitor_sales_B + facebook_S + newsletter, direction = 'forward', k = 2)
 
 n = nrow(df)
 modelo_stepForward_BIC = step(modelo1, scope = ~tv_S + ooh_S + print_S + facebook_I + search_clicks_P + search_S + competitor_sales_B + facebook_S + newsletter, direction = 'forward', k = log(n))
 ```
 
-```{r echo=TRUE}
+Os dois critérios resultaram em modelos bem parecidos e significantes com exceção da variáveis facebook_S que foi retirada pelo critério BIC já que o valor p era maior que 0.10.
+
+**Gráfico 8. Resumo melhores modelos (AIC e BIC)**
+
+```{r echo=FALSE}
 summary(modelo_stepForward_AIC)
 summary(modelo_stepForward_BIC)
 ```
 
-```{r echo=TRUE}
+Percebe-se os coeficientes dos modelos são bem próximos, apenas o intercepto do modelo 2 (BIC) é um pouco menor pela retirada da variável facebook_S
+
+**Gráfico 9. Comparação de coeficientes (AIC e BIC)**
+
+```{r echo=FALSE}
 compareCoefs(modelo_stepForward_AIC, modelo_stepForward_BIC)
 ```
 
-### **Análise de Resíduos**
+### **Avaliação dos Resíduos do Modelo**
 
-```{r echo=TRUE}
-residuos1 = modelo_stepForward_BIC$residuals
-summary(residuos1)
+Para análise dos resíduos, incialmente foi realizada uma análise gráfica, posteriormente foi realizado a avaliação da normalidade e da presença de outliers por testes estatísticos. Os resultados encontram-se abaixo:
+
+**Modelo AIC**
+
+**Gráfico 10. Resíduos do modelo (AIC)**
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+par(mfrow=c(2,2))
+plot(modelo_stepForward_AIC, wich = c(1:4), pch = 20)
+par(mfrow=c(1,1))
 ```
 
-```{r echo=TRUE}
-preditos1 = predict(modelo_stepForward_BIC)
-preditos1 = modelo_stepForward_BIC$fitted.values
+Observa-se, avaliando o gráfico *Residual vs Fitted* que é possivel identificar uma linearidade nos resíduos, no entanto os mesmos não seguem uma distribuição normal, uma vez que no gráfico *Q-Q Plot* foram observados vários pontos fora da linha de previsão.
+
+No gráfico *Scale-Location* observa-se pontos fora do padrão, não podendo dizer atrávés dele se os resíduos são homocedásticos. Por fim, verifica-se que ha alguns pontos influentes, uma vez que no gráfico *Residual vs Leverage* ha pontos próximos aos limites.
+
+Para confirmar a normalidade dos resíduos foi realizado o teste Shapiro-Wilk, obtendo a seguinte estatística:
+
+**Gráfico 11. Teste de normalidade dos resíduos (AIC)**
+
+```{r echo=FALSE}
+shapiro.test(modelo_stepForward_AIC$residuals)
 ```
 
-```{r echo=TRUE}
-qqnorm(residuos1) ; qqline(residuos1)
-shapiro.test(residuos1)
+O teste de Shapiro-Wilk considera como hipótese nula a normalidade dos resíduos, como o valor encontrado ficou abaixo dos 5% a hipótese nula deve ser rejeitada assumindo a não normalidade dos resíduos da regressão.
+
+A presença de outliers foi confimada através da função summary onde o output encontrado entre mínimo é máximo excede o intervalo -3 a +3.
+
+**Gráfico 12. Resumo dos resíduos do modelo (AIC)**
+
+```{r echo=FALSE}
+summary(rstandard(modelo_stepForward_AIC))
 ```
+
+**Modelo BIC**
+
+A avaliação dos modelo BIC encontrou outputs semelhantes ao do modelo AIC.
+
+**Gráfico 13. Resíduos do modelo (BIC)**
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+par(mfrow=c(2,2))
+plot(modelo_stepForward_BIC, wich = c(1:4), pch = 20)
+par(mfrow=c(1,1))
+```
+
+A analíse gráfica apresentou o mesmo padrão, sendo possível identificar pontos de outliers.
+
+Ao realizar o teste de normalidade, observa-se que não é possível assumir a normalidade dos resíduos encontrados.
+
+**Gráfico 14. Teste de normalidade dos resíduos (BIC)**
+
+```{r echo=FALSE}
+shapiro.test(modelo_stepForward_BIC$residuals)
+```
+
+A presença de outliers foi confimada através da função summary onde o output encontrado entre mínimo é máximo excede o intervalo -3 a +3.
+
+**Gráfico 15. Resumo dos resíduos do modelo (BIC)**
+
+```{r echo=FALSE}
+summary(rstandard(modelo_stepForward_AIC))
+```
+
+A homocedasticidade e a interdependência dos resíduos foram avaliadas apenas graficamente uma vez que os outros pressupostos ja haviam sido feridos.
 
 # **6. Conclusão**
+
+O modelo final pode ser considerado um modelo bom já que todas as variáveis inputadas tem significancia estatística e o coeficiente de determinação foi de 0.86.
+
+Tentamos ser o mais parcimoniosos possível aplicando análise descritiva, correlação, normalidade dos dados, além de utilizar o método forward pelos critérios AIC e BIC e análise dos resíduos.
+
+Reconhecemos haver algumas limitações, poderíamos implementar algumas outras técnicas para haver mais confiança, como por exemplo, realizar estimação, predições e inferências, utilizar a técnica vif, diferentes métodos de seleção de modelo e diferentes métricas de análise do modelo.
+
+Para futuros trabalhos pretendemos, além das limitações descritas acima, testar novos modelos com transformações nas variáveis devido a não-normalidades dos dados.
